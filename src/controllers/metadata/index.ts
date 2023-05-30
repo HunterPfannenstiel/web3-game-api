@@ -1,8 +1,11 @@
 import { RequestHandler } from "express";
-import { getNFTMetadata } from "./utils";
+import { getNFTMetadata, getSmolMetadata } from "./utils";
 import { ServerError } from "../../custom-objects/ServerError";
 
-const controller = {} as { getUserMetadata: RequestHandler };
+const controller = {} as {
+  getUserMetadata: RequestHandler;
+  getUserSmolMetadata: RequestHandler;
+};
 
 const getUserMetadata: RequestHandler = async (req, res, next) => {
   try {
@@ -14,7 +17,23 @@ const getUserMetadata: RequestHandler = async (req, res, next) => {
         400
       );
     }
-    const smolBrains = await getNFTMetadata(contract, account as string);
+    const tokens = await getNFTMetadata(contract, account);
+    return res.status(200).json({ tokens });
+  } catch (error: any) {
+    next(error);
+  }
+};
+
+const getUserSmolMetadata: RequestHandler = async (req, res, next) => {
+  try {
+    const { account } = req.query; //user to retrieve metadata for
+    if (typeof account !== "string") {
+      throw new ServerError(
+        "Please provide a single account as a query parameter ",
+        400
+      );
+    }
+    const smolBrains = await getSmolMetadata(account);
     return res.status(200).json({ tokens: smolBrains });
   } catch (error: any) {
     next(error);
@@ -22,5 +41,6 @@ const getUserMetadata: RequestHandler = async (req, res, next) => {
 };
 
 controller.getUserMetadata = getUserMetadata;
+controller.getUserSmolMetadata = getUserSmolMetadata;
 
 export default controller;

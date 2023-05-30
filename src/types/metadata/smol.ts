@@ -1,4 +1,5 @@
 export type SmolBrain = {
+  tokenId: string;
   image: string;
   attributes: SmolBrainAttribute[];
 };
@@ -28,3 +29,38 @@ type SmolBrainHeadSize = {
 };
 
 //Traits: "Background, Body, Clothes, Glasses, Hat, Hair, Mouth, Gender"
+
+export const enumToTrait = {
+  "0": "Background",
+  "1": "Body",
+  "2": "Hair",
+  "3": "Clothes",
+  "4": "Glasses",
+  "5": "Hat",
+  "6": "Mouth",
+  "7": "Costume",
+};
+
+export type SmolTraitResponse = {
+  amountClaimed: number;
+  limitedOfferId: number;
+  maxSupply: number;
+  price: number;
+  forSale: boolean;
+  tradable: boolean;
+  uncappedSupply: boolean;
+  traitType: keyof typeof enumToTrait;
+  subgroupId: number;
+  name: string;
+  uri: string;
+};
+
+export type SmolBrainServerResponse = {
+  traitInfo: SmolTrait[];
+  smol: SmolBrain;
+};
+
+export type SmolTrait = {
+  name: string;
+  traitType: string;
+};
