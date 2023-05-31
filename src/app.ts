@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import { config } from "dotenv";
 import metadataRouter from "./routes/metadata";
+import smachoRouter from "./routes/smacho";
 
 if (process.env.NODE_ENV !== "production") config();
 
@@ -18,8 +19,9 @@ app.use((req, res, next) => {
 });
 
 app.use("/metadata", metadataRouter);
+app.use("/smacho", smachoRouter);
 
-app.get("/hello", (req, res, next) => {
+app.get("/", (req, res, next) => {
   return res.status(200).json({ message: "hello" });
 });
 

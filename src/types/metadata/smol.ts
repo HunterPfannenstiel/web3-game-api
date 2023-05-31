@@ -5,10 +5,24 @@ export type SmolBrain = {
 };
 
 export interface SmolBrainAttribute {
-  trait_type: string;
+  trait_type: TraitTypeKey;
   display_type: "numeric" | undefined;
   value: this["display_type"] extends "numeric" ? number : string;
 }
+
+export type TraitTypeKey =
+  | "Background"
+  | "Body"
+  | "Clothes"
+  | "Gender"
+  | "Glasses"
+  | "Hair"
+  | "Hat"
+  | "Head Size"
+  | "IQ"
+  | "IQ Pending"
+  | "Mouth"
+  | "Naked";
 
 type SmolBrainIQ = {
   trait_type: "IQ";

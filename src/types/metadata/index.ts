@@ -3,3 +3,8 @@ export type TokenMetadata = {
   attributes: Record<string, any>[] | undefined;
   image?: string | undefined;
 };
+
+export type Layer = {
+  traitType: string;
+  traitVaule: string;
+};
