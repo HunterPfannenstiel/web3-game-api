@@ -32,3 +32,10 @@ export const getAlchemy = (network = Network.ARB_MAINNET) => {
   const alchemy = new Alchemy(settings);
   return alchemy;
 };
+
+export const signMessage = async (message: string) => {
+  const messageHash = ethers.keccak256(ethers.toUtf8Bytes(message));
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY!);
+  const signature = await signer.signMessage(ethers.toBeArray(messageHash));
+  return signature;
+};
