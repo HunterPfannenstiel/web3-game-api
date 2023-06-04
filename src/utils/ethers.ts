@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { Network, Alchemy } from "alchemy-sdk";
 
-const getAlchemyProvider = (network = "arbitrum") => {
+export const getAlchemyProvider = (network = "arbitrum") => {
   const provider = new ethers.AlchemyProvider(network, process.env.ALCHEMY_KEY);
   return provider;
 };
@@ -35,6 +35,13 @@ export const getAlchemy = (network = Network.ARB_MAINNET) => {
 
 export const signMessage = async (message: string) => {
   const messageHash = ethers.keccak256(ethers.toUtf8Bytes(message));
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY!);
+  const signature = await signer.signMessage(ethers.toBeArray(messageHash));
+  return signature;
+};
+
+export const signBytes = async (bytes: string) => {
+  const messageHash = ethers.keccak256(bytes);
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY!);
   const signature = await signer.signMessage(ethers.toBeArray(messageHash));
   return signature;

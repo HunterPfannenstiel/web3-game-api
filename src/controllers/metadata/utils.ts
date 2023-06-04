@@ -1,4 +1,8 @@
-import { SmolBrainServerResponse } from "types/metadata/smol";
+import {
+  InitialSmolBrainAttribute,
+  SmolBrainServerResponse,
+  SmolTrait,
+} from "types/metadata/smol";
 import { getAlchemy } from "../../utils/ethers";
 import { SmolBrainAttribute } from "../../types/metadata/smol";
 import {
@@ -34,15 +38,31 @@ export const getSmolMetadata = async (account: string) => {
     return new Promise<SmolBrainServerResponse>(async (resolve) => {
       const traits = await getSmolTraits(smolBrain.tokenId, traitContract);
       resolve({
-        traitInfo: traits,
+        traitInfo: normalizeTraits(traits),
         smol: {
           tokenId: smolBrain.tokenId,
           image: smolBrain.rawMetadata!.image!,
-          attributes: smolBrain.rawMetadata!.attributes as SmolBrainAttribute[],
+          attributes: convertToNormalizedAttributes(
+            smolBrain.rawMetadata!.attributes as InitialSmolBrainAttribute[]
+          ),
         },
       });
     });
   });
   const smolBrains = await Promise.all(smolPromises);
   return smolBrains;
+};
+
+const convertToNormalizedAttributes = (
+  attributes: InitialSmolBrainAttribute[]
+): SmolBrainAttribute[] => {
+  return attributes.map((attribute) => {
+    return { [attribute.trait_type]: attribute.value };
+  });
+};
+
+const normalizeTraits = (traits: SmolTrait[]): SmolBrainAttribute[] => {
+  return traits.map((trait) => {
+    return { [trait.traitType]: trait.name };
+  });
 };

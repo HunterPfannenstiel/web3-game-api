@@ -4,11 +4,15 @@ export type SmolBrain = {
   attributes: SmolBrainAttribute[];
 };
 
-export interface SmolBrainAttribute {
+export interface InitialSmolBrainAttribute {
   trait_type: TraitTypeKey;
   display_type: "numeric" | undefined;
   value: this["display_type"] extends "numeric" ? number : string;
 }
+
+export type SmolBrainAttribute = {
+  [key: string]: string;
+};
 
 export type TraitTypeKey =
   | "Background"
@@ -70,7 +74,7 @@ export type SmolTraitResponse = {
 };
 
 export type SmolBrainServerResponse = {
-  traitInfo: SmolTrait[];
+  traitInfo: SmolBrainAttribute[];
   smol: SmolBrain;
 };
 

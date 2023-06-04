@@ -3,7 +3,11 @@ import { buildToken } from "../../utils/image";
 import { NftTokenType } from "alchemy-sdk";
 import { RequestHandler } from "express";
 import { Layer } from "types/metadata";
-import { SmolBrainAttribute, TraitTypeKey } from "types/metadata/smol";
+import {
+  InitialSmolBrainAttribute,
+  SmolBrainAttribute,
+  TraitTypeKey,
+} from "types/metadata/smol";
 
 const controller = {} as {
   getSmachoForToken: RequestHandler;
@@ -20,7 +24,8 @@ controller.getSmachoForToken = async (req, res, next) => {
       id,
       { tokenType: NftTokenType.ERC721 }
     );
-    const metadata = token.rawMetadata?.attributes as SmolBrainAttribute[];
+    const metadata = token.rawMetadata
+      ?.attributes as InitialSmolBrainAttribute[];
     const traitMap = {} as { [key in TraitTypeKey]: string | undefined };
     metadata.forEach((meta) => {
       traitMap[meta.trait_type] =
