@@ -1,6 +1,6 @@
 import {
   InitialSmolBrainAttribute,
-  SmolBrainServerResponse,
+  SmolBrain,
   SmolTrait,
 } from "types/metadata/smol";
 import { getAlchemy } from "../../utils/ethers";
@@ -35,17 +35,15 @@ export const getSmolMetadata = async (account: string) => {
   });
   const traitContract = getSmolTraitContract();
   const smolPromises = ownedNfts.map((smolBrain) => {
-    return new Promise<SmolBrainServerResponse>(async (resolve) => {
+    return new Promise<SmolBrain>(async (resolve) => {
       const traits = await getSmolTraits(smolBrain.tokenId, traitContract);
       resolve({
         traitInfo: normalizeTraits(traits),
-        smol: {
-          tokenId: smolBrain.tokenId,
-          image: smolBrain.rawMetadata!.image!,
-          attributes: convertToNormalizedAttributes(
-            smolBrain.rawMetadata!.attributes as InitialSmolBrainAttribute[]
-          ),
-        },
+        tokenId: smolBrain.tokenId,
+        // image: smolBrain.rawMetadata!.image!,
+        attributes: convertToNormalizedAttributes(
+          smolBrain.rawMetadata!.attributes as InitialSmolBrainAttribute[]
+        ),
       });
     });
   });

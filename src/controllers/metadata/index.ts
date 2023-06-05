@@ -34,7 +34,7 @@ const getUserSmolMetadata: RequestHandler = async (req, res, next) => {
       );
     }
     const smolBrains = await getSmolMetadata(account);
-    return res.status(200).json({ tokens: smolBrains });
+    return res.status(200).json(smolBrains);
   } catch (error: any) {
     next(error);
   }

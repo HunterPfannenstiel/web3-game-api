@@ -1,6 +1,7 @@
 export type SmolBrain = {
+  traitInfo: SmolBrainAttribute[];
   tokenId: string;
-  image: string;
+  // image: string;
   attributes: SmolBrainAttribute[];
 };
 
@@ -71,11 +72,6 @@ export type SmolTraitResponse = {
   subgroupId: number;
   name: string;
   uri: string;
-};
-
-export type SmolBrainServerResponse = {
-  traitInfo: SmolBrainAttribute[];
-  smol: SmolBrain;
 };
 
 export type SmolTrait = {
