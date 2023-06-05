@@ -1,5 +1,6 @@
 import {
   InitialSmolBrainAttribute,
+  SmolAttributeObject,
   SmolBrain,
   SmolTrait,
 } from "types/metadata/smol";
@@ -53,10 +54,12 @@ export const getSmolMetadata = async (account: string) => {
 
 const convertToNormalizedAttributes = (
   attributes: InitialSmolBrainAttribute[]
-): SmolBrainAttribute[] => {
-  return attributes.map((attribute) => {
-    return { [attribute.trait_type]: attribute.value };
-  });
+) => {
+  const objectAttributes = {} as SmolAttributeObject;
+  attributes.forEach(
+    (attribute) => (objectAttributes[attribute.trait_type] = attribute.value)
+  );
+  return objectAttributes;
 };
 
 const normalizeTraits = (traits: SmolTrait[]): SmolBrainAttribute[] => {

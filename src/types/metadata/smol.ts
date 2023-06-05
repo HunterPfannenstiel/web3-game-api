@@ -2,7 +2,7 @@ export type SmolBrain = {
   traitInfo: SmolBrainAttribute[];
   tokenId: string;
   // image: string;
-  attributes: SmolBrainAttribute[];
+  attributes: SmolAttributeObject;
 };
 
 export interface InitialSmolBrainAttribute {
@@ -13,6 +13,10 @@ export interface InitialSmolBrainAttribute {
 
 export type SmolBrainAttribute = {
   [key: string]: string;
+};
+
+export type SmolAttributeObject = {
+  [key in TraitTypeKey]: string;
 };
 
 export type TraitTypeKey =
