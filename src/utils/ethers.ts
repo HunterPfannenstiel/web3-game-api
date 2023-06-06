@@ -1,5 +1,8 @@
 import { ethers } from "ethers";
 import { Network, Alchemy } from "alchemy-sdk";
+import { UserToken } from "types/database";
+import { ServerError } from "../custom-objects/ServerError";
+import { ClaimInfoStruct } from "../types/game-contract";
 
 export const getAlchemyProvider = (network = "arbitrum") => {
   const provider = new ethers.AlchemyProvider(network, process.env.ALCHEMY_KEY);
@@ -45,4 +48,50 @@ export const signBytes = async (bytes: string) => {
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY!);
   const signature = await signer.signMessage(ethers.toBeArray(messageHash));
   return signature;
+};
+
+export const createMintingMessageAndSig = async (
+  minter: string,
+  nonce: number,
+  mintingDetails: UserToken[],
+  validTill: number
+) => {
+  const claimInfo: ClaimInfoStruct = {
+    minter,
+    validTill,
+    nonce,
+    mintingDetails,
+  };
+  const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
+    claimInfoStruct,
+    [
+      claimInfo.minter,
+      claimInfo.validTill,
+      claimInfo.nonce,
+      claimInfo.mintingDetails.map((mint) => [mint.tokenId, mint.amount]),
+    ]
+  );
+  const dataSig = await signBytes(encodedData);
+  return { data: encodedData, signature: dataSig };
+};
+
+export const claimInfoStruct = [
+  "address",
+  "uint256",
+  "uint256",
+  "tuple(uint256, uint256)[]",
+];
+
+export const getValidTillTime = async (futureMinutes = 5) => {
+  const alchemy = getAlchemyProvider();
+  const currBlockNum = await alchemy.getBlockNumber();
+  const block = await alchemy.getBlock(currBlockNum);
+  const timeStamp = block?.timestamp;
+  if (!timeStamp) {
+    throw new ServerError("Could not fetch the current block timestamp", 500);
+  }
+  console.log(timeStamp);
+  const fiveMinutes = futureMinutes * 60;
+  const futureTimestamp = timeStamp + fiveMinutes;
+  return futureTimestamp;
 };

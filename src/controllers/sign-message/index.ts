@@ -1,12 +1,13 @@
-import { getAlchemyProvider, signBytes, signMessage } from "../../utils/ethers";
+import {
+  claimInfoStruct,
+  getValidTillTime,
+  signBytes,
+  signMessage,
+} from "../../utils/ethers";
 import { ServerError } from "../../custom-objects/ServerError";
 import { ethers } from "ethers";
 import { RequestHandler } from "express";
-import {
-  ClaimInfoStruct,
-  MintInfoStruct,
-  claimInfoStruct,
-} from "../../types/game-contract";
+import { ClaimInfoStruct, MintInfoStruct } from "../../types/game-contract";
 
 const controller = {} as {
   getSignedMessage: RequestHandler;
@@ -55,20 +56,6 @@ controller.getMintingMessage = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-const getValidTillTime = async (futureMinutes = 5) => {
-  const alchemy = getAlchemyProvider();
-  const currBlockNum = await alchemy.getBlockNumber();
-  const block = await alchemy.getBlock(currBlockNum);
-  const timeStamp = block?.timestamp;
-  if (!timeStamp) {
-    throw new ServerError("Could not fetch the current block timestamp", 500);
-  }
-  console.log(timeStamp);
-  const fiveMinutes = futureMinutes * 60;
-  const futureTimestamp = timeStamp + fiveMinutes;
-  return futureTimestamp;
 };
 
 export default controller;

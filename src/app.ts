@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import metadataRouter from "./routes/metadata";
 import smachoRouter from "./routes/smacho";
 import signMessageRouter from "./routes/sign-message";
+import databaseRouter from "./routes/database";
 
 if (process.env.NODE_ENV !== "production") config();
 
@@ -22,6 +23,7 @@ app.use((req, res, next) => {
 app.use("/metadata", metadataRouter);
 app.use("/smacho", smachoRouter);
 app.use("/sign-message", signMessageRouter);
+app.use("/database", databaseRouter);
 
 app.get("/", (req, res, next) => {
   return res.status(200).json({ message: "hello" });
