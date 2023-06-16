@@ -82,7 +82,7 @@ export const claimInfoStruct = [
   "tuple(uint256, uint256)[]",
 ];
 
-export const getValidTillTime = async (futureMinutes = 5) => {
+export const getCurrentBlockTime = async () => {
   const alchemy = getAlchemyProvider();
   const currBlockNum = await alchemy.getBlockNumber();
   const block = await alchemy.getBlock(currBlockNum);
@@ -90,6 +90,11 @@ export const getValidTillTime = async (futureMinutes = 5) => {
   if (!timeStamp) {
     throw new ServerError("Could not fetch the current block timestamp", 500);
   }
+  return timeStamp;
+};
+
+export const getValidTillTime = async (futureMinutes = 5) => {
+  const timeStamp = await getCurrentBlockTime();
   console.log(timeStamp);
   const fiveMinutes = futureMinutes * 60;
   const futureTimestamp = timeStamp + fiveMinutes;

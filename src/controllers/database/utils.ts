@@ -38,3 +38,36 @@ export const getTransactionData = async (
     tokens: UserToken[];
   };
 };
+
+export const confirmTransaction = async (address: string, nonce: number) => {
+  const query = "CALL public.confirm_transaction($1, $2)";
+  await apiQuery(query, [address, nonce]);
+};
+
+export const getReclaimInfo = async (transactionId: number) => {
+  const query = "SELECT * FROM public.get_reclaim_info($1)";
+  const res = await apiQuery(query, [transactionId]);
+  return res.rows[0] as {
+    valid_till: number;
+    account_id: number;
+    account_address: string;
+    is_pending: boolean;
+    nonce: number;
+  };
+};
+
+export const checkTransactionStatusInContract = async (
+  accountAddress: string,
+  nonce: number
+) => {
+  console.log("IMPLEMENT THIS FUNCTION");
+  return false;
+};
+
+export const reclaimTransaction = async (
+  accountId: number,
+  transactionId: number
+) => {
+  const query = "CALL public.reclaim_pending_transaction($1, $2)";
+  await apiQuery(query, [accountId, transactionId]);
+};
