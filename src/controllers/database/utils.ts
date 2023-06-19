@@ -1,5 +1,6 @@
 import { apiQuery } from "../../utils/database/connect";
 import { UserToken } from "../../types/database";
+import { ServerError } from "../../custom-objects/ServerError";
 
 export const incrementUserBalance = async (
   accountId: number,
@@ -30,7 +31,9 @@ export const getTransactionData = async (
   const query = "SELECT * FROM public.get_transaction_data($1, $2)";
 
   const res = await apiQuery(query, [accountId, transactionId]);
-
+  if (res.rows.length === 0) {
+    throw new ServerError("Could not find transaction");
+  }
   return res.rows[0] as {
     ethereum_address: string;
     valid_till: number;
@@ -70,4 +73,10 @@ export const reclaimTransaction = async (
 ) => {
   const query = "CALL public.reclaim_pending_transaction($1, $2)";
   await apiQuery(query, [accountId, transactionId]);
+};
+
+export const viewUsersTokens = async (accountId: number) => {
+  const query = "SELECT * FROM public.view_user_tokens($1)";
+  const res = await apiQuery(query, [accountId]);
+  return res.rows as UserToken[];
 };

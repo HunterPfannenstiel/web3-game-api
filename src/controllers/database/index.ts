@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { UserToken } from "../../types/database";
+import { AuthRequest, UserToken } from "../../types/database";
 import {
   checkTransactionStatusInContract,
   confirmTransaction,
@@ -8,6 +8,7 @@ import {
   getTransactionData,
   incrementUserBalance,
   reclaimTransaction,
+  viewUsersTokens,
 } from "./utils";
 import {
   createMintingMessageAndSig,
@@ -15,7 +16,7 @@ import {
   getValidTillTime,
 } from "../../utils/ethers";
 import { ServerError } from "../../custom-objects/ServerError";
-import { getMinutesAndSeconds } from "../../utils";
+import { getMinutesAndSeconds, typeCheck } from "../../utils";
 
 const controller = {} as {
   postTokens: RequestHandler;
@@ -23,6 +24,7 @@ const controller = {} as {
   getTransactionInfo: RequestHandler;
   postTransactionConfirmation: RequestHandler;
   postReclaimTransaction: RequestHandler;
+  getUsersTokens: RequestHandler;
 };
 
 type TokenBody = {
@@ -31,7 +33,9 @@ type TokenBody = {
 };
 
 controller.postTokens = async (req, res, next) => {
-  const { accountId, tokens } = req.body as TokenBody;
+  const authReq = req as AuthRequest;
+  const { accountId } = authReq;
+  const { tokens } = req.body as TokenBody;
   try {
     await incrementUserBalance(accountId, tokens);
     res.status(200).json({ message: "Success!" });
@@ -45,17 +49,14 @@ controller.postTokens = async (req, res, next) => {
  *  The server will respond with the raw data and the signed data that can be used to claim the tokens from the database
  */
 controller.postMintTransaction = async (req, res, next) => {
-  const { accountId, tokens } = req.body as TokenBody;
-  if (typeof accountId !== "number") {
-    throw new ServerError("The account id body key must be of type number");
-  }
-  if (typeof tokens !== "object") {
-    throw new ServerError("The tokens body key must be of type array");
-  }
-  const negativeTokens = tokens.map((token) => {
-    return { tokenId: token.tokenId, amount: -token.amount };
-  });
   try {
+    const authReq = req as AuthRequest;
+    const { accountId } = authReq;
+    const { tokens } = req.body as TokenBody;
+    typeCheck("object", { name: "tokens", value: tokens });
+    const negativeTokens = tokens.map((token) => {
+      return { tokenId: token.tokenId, amount: -token.amount };
+    });
     const validTill = await getValidTillTime();
     const { next_nonce, address } = await createNewTransaction(
       accountId,
@@ -76,19 +77,12 @@ controller.postMintTransaction = async (req, res, next) => {
 };
 
 controller.getTransactionInfo = async (req, res, next) => {
-  const { accountId, transactionId } = req.query;
+  const authReq = req as AuthRequest;
+  const { accountId } = authReq;
+  const { transactionId } = req.query;
   try {
-    if (typeof accountId !== "string") {
-      throw new ServerError(
-        "The account id query parameter must be of type string"
-      );
-    }
-    if (typeof transactionId !== "string") {
-      throw new ServerError(
-        "The transaction id query parameter must be of type string"
-      );
-    }
-    const data = await getTransactionData(+accountId, +transactionId);
+    typeCheck("string", { name: "transactionId", value: transactionId });
+    const data = await getTransactionData(+accountId!, +transactionId!);
     const transactionInfo = await createMintingMessageAndSig(
       data.ethereum_address,
       data.nonce,
@@ -103,7 +97,7 @@ controller.getTransactionInfo = async (req, res, next) => {
 
 controller.postTransactionConfirmation = async (req, res, next) => {
   try {
-    const { userAddress, nonce } = req.body; //Implement moralis stream or alchemy websocket to get actaull address and nonce
+    const { userAddress, nonce } = req.body; //Implement moralis stream or alchemy websocket to get actual address and nonce
     await confirmTransaction(userAddress as string, +(nonce as string));
     return res.status(200).end();
   } catch (error) {
@@ -113,7 +107,10 @@ controller.postTransactionConfirmation = async (req, res, next) => {
 
 controller.postReclaimTransaction = async (req, res, next) => {
   try {
-    const { accountId, transactionId } = req.body;
+    const authReq = req as AuthRequest;
+    const { accountId } = authReq;
+    const { transactionId } = req.body;
+    typeCheck("number", { name: "transactionId", value: transactionId });
     const info = await getReclaimInfo(transactionId);
     if (!info.is_pending) {
       throw new ServerError(
@@ -148,6 +145,17 @@ controller.postReclaimTransaction = async (req, res, next) => {
     }
     await reclaimTransaction(accountId, transactionId);
     return res.status(200).json({ message: "Transaction reclaimed" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getUsersTokens = async (req, res, next) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { accountId } = authReq;
+    const tokens = await viewUsersTokens(+accountId!);
+    return res.status(200).json(tokens);
   } catch (error) {
     next(error);
   }
