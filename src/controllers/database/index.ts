@@ -28,7 +28,6 @@ const controller = {} as {
 };
 
 type TokenBody = {
-  accountId: number;
   tokens: UserToken[];
 };
 

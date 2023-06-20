@@ -14,18 +14,23 @@
     "@adraffy/ens-normalize": "^1.9.2",
     "alchemy-sdk": "^2.8.3",
     "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.0.3",
+    "ethereumjs-util": "^7.1.5",
     "ethers": "^6.4.0",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
-    "sharp": "^0.32.1"
+    "sharp": "^0.32.1",
+    "uid-safe": "^2.1.5"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.2.5",
     "@types/pg": "^8.10.1",
+    "@types/uid-safe": "^2.1.2",
     "nodemon": "^2.0.22",
     "pg": "^8.11.0",
     "ts-node": "^10.9.1"

@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import { config } from "dotenv";
+import cookieParser from "cookie-parser";
 import metadataRouter from "./routes/metadata";
 import smachoRouter from "./routes/smacho";
 import signMessageRouter from "./routes/sign-message";
@@ -10,6 +11,7 @@ if (process.env.NODE_ENV !== "production") config();
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

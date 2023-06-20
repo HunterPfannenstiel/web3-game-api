@@ -43,10 +43,24 @@ export const setCookie = (
   res: Response,
   cookieName: string,
   cookieValue: string,
-  expires: Date
+  expires: Date,
+  path?: string
 ) => {
-  res.setHeader(
-    "set-cookie",
-    `${cookieName}=${cookieValue}; expires=${expires.toUTCString()}`
-  );
+  let cookie = `${cookieName}=${cookieValue}; HttpOnly; expires=${expires.toUTCString()}`;
+  if (path) cookie += `; path=${path}`;
+  res.setHeader("set-cookie", cookie);
+};
+
+export const addTimeToCurrentDate = (
+  timeScale: "Minutes" | "Days",
+  value: number
+) => {
+  switch (timeScale) {
+    case "Minutes":
+      return new Date(new Date().getTime() + value * 60000);
+    case "Days":
+      const date = new Date();
+      date.setDate(date.getDate() + value);
+      return date;
+  }
 };

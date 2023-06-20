@@ -1,31 +1,50 @@
 import { typeCheck } from "../utils";
 import { ServerError } from "../custom-objects/ServerError";
-import { Response, NextFunction, RequestHandler } from "express";
+import { Request, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 import { AuthRequest, UserSession } from "../types/database";
 
-export const authMiddleware: RequestHandler = async (req, res, next) => {
-  let sessionString: string;
-  try {
-    if (req.method === "GET") {
-      sessionString = req.query.session as string;
-    } else if (req.method === "POST" || req.method === "PATCH") {
-      sessionString = req.body.session;
-    } else {
-      throw new ServerError(`Unexpected request method [${req.method}]`);
-    }
+export const authMiddleware =
+  (isWebRoute?: boolean): RequestHandler =>
+  async (req, res, next) => {
+    let sessionString: string;
     try {
-      typeCheck("string", { name: "session", value: sessionString });
+      if (isWebRoute === undefined) {
+        sessionString = extractFromCookies(req) || extractFromClient(req);
+      } else if (isWebRoute) {
+        sessionString = extractFromCookies(req);
+      } else {
+        sessionString = extractFromClient(req);
+      }
+      try {
+        typeCheck("string", { name: "session", value: sessionString });
+      } catch (error) {
+        throw new ServerError(
+          "Please sign-in before accessing this route",
+          400
+        );
+      }
+      const { accountId } = (await verifyJWT(sessionString)) as UserSession;
+      const authRequest = req as AuthRequest;
+      console.log("Auth middleware account id: ", accountId);
+      authRequest.accountId = accountId;
+      next();
     } catch (error) {
-      throw new ServerError("Please sign-in before accessing this route", 400);
+      next(error);
     }
-    const { accountId } = (await verifyJWT(sessionString)) as UserSession;
-    const authRequest = req as AuthRequest;
-    console.log("Auth middleware account id: ", accountId);
-    authRequest.accountId = accountId;
-    next();
-  } catch (error) {
-    next(error);
+  };
+
+const extractFromCookies = (req: Request) => {
+  return req.cookies["session"];
+};
+
+const extractFromClient = (req: Request) => {
+  if (req.method === "GET") {
+    return req.query.session as string;
+  } else if (req.method === "POST" || req.method === "PATCH") {
+    return req.body.session;
+  } else {
+    throw new ServerError(`Unexpected request method [${req.method}]`);
   }
 };
 
