@@ -1,0 +1,16 @@
+/database
+    /claim - POST: Expects 'session' and 'tokens' to be apart of request body. Mints the specified tokens for the user.
+    /mint - POST: Expects 'session' cookie to be set and 'tokens' to be apart of request body. Initiates a minting request and returns the data and signature that is needed to mint the tokens
+    /confirm-transaction - POST: Should only be called by a webhook to confirm a transaction when a user mints
+    /reclaim-transaction - POST: Expects 'transactionId' to be apart of request body and 'session' to be in a cookie or apart of request body. Re-increments a users balances from an initiated minting request if request has expired
+    /transaction-info - GET: Expects 'session' to be in a cookie or in a query parameter and 'transactionId' to be a query parameter. Will retrieve the data and signature that is required to mint the given 'transactionId'
+    /user-tokens - GET: Expects 'session' to be in a cookie or in a query paramter. Returns the users tokens
+
+    /web
+        /login - POST: Expects 'userName' and 'password' to be apart of the request body. Sets a session cookie if sign-in is successful
+        /wallet-link - POST: Expects user to be signed in and 'signature' and 'address' to be apart of the request body. Links account to given address if verification is successful
+        /challenge - GET: Generates a signing challenge for the user to link their wallet
+
+/metadata
+
+/smacho

@@ -11,7 +11,6 @@ export const verifySignature = async (
   address: string,
   signature: string
 ) => {
-  console.log("VERIFICATION", originalMessage);
   if (address && signature) {
     let nonce: string | Buffer =
       "\x19Ethereum Signed Message:\n" +
@@ -25,7 +24,7 @@ export const verifySignature = async (
     const addr = util.bufferToHex(addrBuffer);
 
     if (addr === address) {
-      return address;
+      return addr;
     } else {
       throw new ServerError("User does not own provided address", 400);
     }

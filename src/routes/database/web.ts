@@ -6,6 +6,8 @@ const router = Router();
 
 router.post("/login", controller.postLogin);
 
+router.post("/login-ethereum", controller.postLoginWithEthereum);
+
 router.post("/wallet-link", authMiddleware(true), controller.postLinkWallet);
 
 router.get("/challenge", controller.getSigningChallenge);

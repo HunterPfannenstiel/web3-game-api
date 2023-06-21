@@ -1,15 +1,16 @@
 import { addTimeToCurrentDate, setCookie, typeCheck } from "../../../utils";
 import { RequestHandler } from "express";
-import { loginUser } from "./utils";
+import { getEthereumAccountId, linkEthereumAddress, loginUser } from "./utils";
 import { AuthRequest } from "types/database";
 import { verifySignature } from "../../../utils/auth";
 import { ServerError } from "../../../custom-objects/ServerError";
-import { verifyJWT } from "../../../middleware/auth";
+import { createSessionJWT, verifyJWT } from "../../../middleware/auth";
 import uid from "uid-safe";
 import jwt from "jsonwebtoken";
 
 const controller = {} as {
   postLogin: RequestHandler;
+  postLoginWithEthereum: RequestHandler;
   postLinkWallet: RequestHandler;
   getSigningChallenge: RequestHandler;
 };
@@ -30,18 +31,43 @@ controller.postLogin = async (req, res, next) => {
   }
 };
 
-controller.postLinkWallet = async (req, res, next) => {
+controller.postLoginWithEthereum = async (req, res, next) => {
   try {
-    const authReq = req as AuthRequest;
     const challengeJWT = req.cookies["signing-challenge"];
-    console.log(req.cookies);
+
     if (!challengeJWT) {
       throw new ServerError(
         "The originally signed message was not provided, please get and sign a new message",
         400
       );
     }
+    const { signature, address } = req.body;
+    typeCheck(
+      "string",
+      { name: "signature", value: signature },
+      { name: "address", value: address }
+    );
     const { message } = (await verifyJWT(challengeJWT)) as { message: string };
+    await verifySignature(message, address, signature);
+    const accountId = await getEthereumAccountId(address);
+    const jwt = createSessionJWT(accountId);
+    setCookie(res, "session", jwt, addTimeToCurrentDate("Days", 3), "/");
+    return res.status(200).json({ message: "Successful sign-in!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.postLinkWallet = async (req, res, next) => {
+  try {
+    const authReq = req as AuthRequest;
+    const challengeJWT = req.cookies["signing-challenge"];
+    if (!challengeJWT) {
+      throw new ServerError(
+        "The originally signed message was not provided, please get and sign a new message",
+        400
+      );
+    }
     const { accountId } = authReq;
     const { signature, address } = req.body;
     typeCheck(
@@ -49,8 +75,12 @@ controller.postLinkWallet = async (req, res, next) => {
       { name: "signature", value: signature },
       { name: "address", value: address }
     );
-    //check if address is already linked to an account
+    const { message } = (await verifyJWT(challengeJWT)) as { message: string };
+
     await verifySignature(message, address, signature);
+    await linkEthereumAddress(accountId, address);
+    res.clearCookie("signing-challenge");
+    return res.status(200).json({ message: "Successfully linked!" });
   } catch (error) {
     next(error);
   }

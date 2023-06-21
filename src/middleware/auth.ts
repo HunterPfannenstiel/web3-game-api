@@ -16,6 +16,7 @@ export const authMiddleware =
       } else {
         sessionString = extractFromClient(req);
       }
+      console.log(req.cookies);
       try {
         typeCheck("string", { name: "session", value: sessionString });
       } catch (error) {

@@ -95,7 +95,6 @@ export const getCurrentBlockTime = async () => {
 
 export const getValidTillTime = async (futureMinutes = 5) => {
   const timeStamp = await getCurrentBlockTime();
-  console.log(timeStamp);
   const fiveMinutes = futureMinutes * 60;
   const futureTimestamp = timeStamp + fiveMinutes;
   return futureTimestamp;
