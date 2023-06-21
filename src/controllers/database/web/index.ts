@@ -1,6 +1,11 @@
 import { addTimeToCurrentDate, setCookie, typeCheck } from "../../../utils";
 import { RequestHandler } from "express";
-import { getEthereumAccountId, linkEthereumAddress, loginUser } from "./utils";
+import {
+  getEthereumAccountId,
+  linkEthereumAddress,
+  loginUser,
+  viewUserTokensWithMetadata,
+} from "./utils";
 import { AuthRequest } from "types/database";
 import { verifySignature } from "../../../utils/auth";
 import { ServerError } from "../../../custom-objects/ServerError";
@@ -12,6 +17,7 @@ const controller = {} as {
   postLogin: RequestHandler;
   postLoginWithEthereum: RequestHandler;
   postLinkWallet: RequestHandler;
+  getInventory: RequestHandler;
   getSigningChallenge: RequestHandler;
 };
 
@@ -81,6 +87,16 @@ controller.postLinkWallet = async (req, res, next) => {
     await linkEthereumAddress(accountId, address);
     res.clearCookie("signing-challenge");
     return res.status(200).json({ message: "Successfully linked!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getInventory = async (req, res, next) => {
+  try {
+    const authReq = req as AuthRequest;
+    const tokens = await viewUserTokensWithMetadata(authReq.accountId);
+    return res.status(200).json(tokens);
   } catch (error) {
     next(error);
   }

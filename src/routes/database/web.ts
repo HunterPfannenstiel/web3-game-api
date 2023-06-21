@@ -10,6 +10,8 @@ router.post("/login-ethereum", controller.postLoginWithEthereum);
 
 router.post("/wallet-link", authMiddleware(true), controller.postLinkWallet);
 
+router.get("/inventory", authMiddleware(true), controller.getInventory);
+
 router.get("/challenge", controller.getSigningChallenge);
 
 export default router;

@@ -2,6 +2,7 @@ import { apiQuery } from "../../../utils/database/connect";
 import { ServerError } from "../../../custom-objects/ServerError";
 import { compare } from "bcrypt";
 import { createSessionJWT, verifyJWT } from "../../../middleware/auth";
+import { MachoToken } from "types/database";
 
 export const loginUser = async (username: string, password: string) => {
   const query = "SELECT * FROM public.get_user_password_and_session($1)";
@@ -61,4 +62,10 @@ export const getEthereumAccountId = async (address: string) => {
     );
   }
   return res.rows[0].account_id as number;
+};
+
+export const viewUserTokensWithMetadata = async (accountId: number) => {
+  const query = "SELECT * FROM public.view_user_tokens_with_metadata($1)";
+  const res = await apiQuery(query, [accountId]);
+  return res.rows as MachoToken[];
 };

@@ -19,3 +19,17 @@ export type UserSession = {
 export interface AuthRequest extends Request {
   accountId: number;
 }
+
+export type MachoToken = {
+  tokenId: number;
+  name: string;
+  amount: number;
+  image: string;
+  type: "coin" | "item";
+  colors: TokenColor;
+};
+
+type TokenColor = {
+  borderColor: string;
+  fillColor: string;
+};
