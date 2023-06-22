@@ -33,3 +33,12 @@ type TokenColor = {
   borderColor: string;
   fillColor: string;
 };
+
+export type Transaction = {
+  created_on: string;
+  tokens: MachoToken[];
+  pending: boolean;
+  confirmed: boolean;
+  completed_on: string | null;
+  transaction_id: number;
+};

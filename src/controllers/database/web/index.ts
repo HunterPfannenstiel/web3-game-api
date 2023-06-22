@@ -4,6 +4,7 @@ import {
   getEthereumAccountId,
   linkEthereumAddress,
   loginUser,
+  viewTransactions,
   viewUserTokensWithMetadata,
 } from "./utils";
 import { AuthRequest } from "types/database";
@@ -18,6 +19,7 @@ const controller = {} as {
   postLoginWithEthereum: RequestHandler;
   postLinkWallet: RequestHandler;
   getInventory: RequestHandler;
+  getTransactions: RequestHandler;
   getSigningChallenge: RequestHandler;
 };
 
@@ -97,6 +99,16 @@ controller.getInventory = async (req, res, next) => {
     const authReq = req as AuthRequest;
     const tokens = await viewUserTokensWithMetadata(authReq.accountId);
     return res.status(200).json(tokens);
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getTransactions = async (req, res, next) => {
+  try {
+    const authReq = req as AuthRequest;
+    const transactions = await viewTransactions(authReq.accountId);
+    return res.status(200).json(transactions);
   } catch (error) {
     next(error);
   }

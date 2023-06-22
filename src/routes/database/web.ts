@@ -12,6 +12,8 @@ router.post("/wallet-link", authMiddleware(true), controller.postLinkWallet);
 
 router.get("/inventory", authMiddleware(true), controller.getInventory);
 
+router.get("/transactions", authMiddleware(true), controller.getTransactions);
+
 router.get("/challenge", controller.getSigningChallenge);
 
 export default router;
