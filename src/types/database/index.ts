@@ -21,13 +21,13 @@ export interface AuthRequest extends Request {
 }
 
 export type MachoToken = {
-  tokenId: number;
   name: string;
-  amount: number;
   image: string;
   type: "coin" | "item";
   colors: TokenColor;
 };
+
+export type MachoTokens = { [tokenId: number]: MachoToken };
 
 type TokenColor = {
   borderColor: string;
@@ -36,7 +36,7 @@ type TokenColor = {
 
 export type Transaction = {
   created_on: string;
-  tokens: MachoToken[];
+  tokens: UserToken[];
   pending: boolean;
   confirmed: boolean;
   completed_on: string | null;

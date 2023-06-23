@@ -22,6 +22,8 @@ router.get(
   controller.getTransactionInfo
 );
 
+router.post("/login", controller.postLogin);
+
 router.get("/user-tokens", authMiddleware(), controller.getUsersTokens);
 
 router.get("/", (req, res, next) => {

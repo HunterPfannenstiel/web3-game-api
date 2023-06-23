@@ -4,13 +4,13 @@ import { authMiddleware } from "../../middleware/auth";
 
 const router = Router();
 
-router.post("/login", controller.postLogin);
-
 router.post("/login-ethereum", controller.postLoginWithEthereum);
 
 router.post("/wallet-link", authMiddleware(true), controller.postLinkWallet);
 
-router.get("/inventory", authMiddleware(true), controller.getInventory);
+// router.get("/inventory", authMiddleware(true), controller.getInventory);
+
+router.get("/token-metadata", controller.getTokenMetadata);
 
 router.get("/transactions", authMiddleware(true), controller.getTransactions);
 

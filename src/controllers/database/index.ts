@@ -7,6 +7,7 @@ import {
   getReclaimInfo,
   getTransactionData,
   incrementUserBalance,
+  loginUser,
   reclaimTransaction,
   viewUsersTokens,
 } from "./utils";
@@ -16,7 +17,12 @@ import {
   getValidTillTime,
 } from "../../utils/ethers";
 import { ServerError } from "../../custom-objects/ServerError";
-import { getMinutesAndSeconds, typeCheck } from "../../utils";
+import {
+  addTimeToCurrentDate,
+  getMinutesAndSeconds,
+  setCookie,
+  typeCheck,
+} from "../../utils";
 
 const controller = {} as {
   postTokens: RequestHandler;
@@ -24,6 +30,7 @@ const controller = {} as {
   getTransactionInfo: RequestHandler;
   postTransactionConfirmation: RequestHandler;
   postReclaimTransaction: RequestHandler;
+  postLogin: RequestHandler;
   getUsersTokens: RequestHandler;
 };
 
@@ -54,6 +61,12 @@ controller.postMintTransaction = async (req, res, next) => {
     const { tokens } = req.body as TokenBody;
     typeCheck("object", { name: "tokens", value: tokens });
     const negativeTokens = tokens.map((token) => {
+      if (token.amount < 0) {
+        throw new ServerError(
+          `Cannot withdraw a negative amount of token ${token.tokenId}`,
+          400
+        );
+      }
       return { tokenId: token.tokenId, amount: -token.amount };
     });
     const validTill = await getValidTillTime();
@@ -144,6 +157,22 @@ controller.postReclaimTransaction = async (req, res, next) => {
     }
     await reclaimTransaction(accountId, transactionId);
     return res.status(200).json({ message: "Transaction reclaimed" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.postLogin = async (req, res, next) => {
+  try {
+    const { userName, password } = req.body;
+    typeCheck(
+      "string",
+      { name: "userName", value: userName },
+      { name: "password", value: password }
+    );
+    const { jwt, isNew } = await loginUser(userName, password);
+    setCookie(res, "session", jwt, addTimeToCurrentDate("Days", 3), "/");
+    return res.status(200).end();
   } catch (error) {
     next(error);
   }

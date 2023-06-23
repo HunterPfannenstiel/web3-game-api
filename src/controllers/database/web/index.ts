@@ -3,9 +3,8 @@ import { RequestHandler } from "express";
 import {
   getEthereumAccountId,
   linkEthereumAddress,
-  loginUser,
+  viewTokenMetadata,
   viewTransactions,
-  viewUserTokensWithMetadata,
 } from "./utils";
 import { AuthRequest } from "types/database";
 import { verifySignature } from "../../../utils/auth";
@@ -15,28 +14,11 @@ import uid from "uid-safe";
 import jwt from "jsonwebtoken";
 
 const controller = {} as {
-  postLogin: RequestHandler;
   postLoginWithEthereum: RequestHandler;
   postLinkWallet: RequestHandler;
-  getInventory: RequestHandler;
   getTransactions: RequestHandler;
   getSigningChallenge: RequestHandler;
-};
-
-controller.postLogin = async (req, res, next) => {
-  try {
-    const { userName, password } = req.body;
-    typeCheck(
-      "string",
-      { name: "userName", value: userName },
-      { name: "password", value: password }
-    );
-    const { jwt, isNew } = await loginUser(userName, password);
-    setCookie(res, "session", jwt, addTimeToCurrentDate("Days", 3), "/");
-    return res.status(200).end();
-  } catch (error) {
-    next(error);
-  }
+  getTokenMetadata: RequestHandler;
 };
 
 controller.postLoginWithEthereum = async (req, res, next) => {
@@ -94,16 +76,6 @@ controller.postLinkWallet = async (req, res, next) => {
   }
 };
 
-controller.getInventory = async (req, res, next) => {
-  try {
-    const authReq = req as AuthRequest;
-    const tokens = await viewUserTokensWithMetadata(authReq.accountId);
-    return res.status(200).json(tokens);
-  } catch (error) {
-    next(error);
-  }
-};
-
 controller.getTransactions = async (req, res, next) => {
   try {
     const authReq = req as AuthRequest;
@@ -129,6 +101,15 @@ controller.getSigningChallenge = async (req, res, next) => {
       "/"
     );
     return res.status(200).json({ challenge: message });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getTokenMetadata = async (req, res, next) => {
+  try {
+    const tokenMetadata = await viewTokenMetadata();
+    return res.status(200).json(tokenMetadata);
   } catch (error) {
     next(error);
   }
