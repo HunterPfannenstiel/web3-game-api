@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { ServerError } from "../custom-objects/ServerError";
+import { QueryResult } from "pg";
 
 export const getMinutesAndSeconds = (seconds: number) => {
   const minutesWithDecimal = seconds / 60;
@@ -62,5 +63,11 @@ export const addTimeToCurrentDate = (
       const date = new Date();
       date.setDate(date.getDate() + value);
       return date;
+  }
+};
+
+export const checkRowLength = (res: QueryResult<any>) => {
+  if (res.rows.length < 1) {
+    throw new ServerError("Item not found in the database", 400);
   }
 };

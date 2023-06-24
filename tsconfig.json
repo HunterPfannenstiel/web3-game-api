@@ -36,6 +36,9 @@
       "@routes/*": ["routes/*"],
       "@controllers": ["controllers"],
       "@controllers/*": ["controllers/*"],
+      "@customTypes/*": ["types/*"],
+      "@customObjects/*": ["custom-objects/*"],
+      "@middleware/*": ["middleware/*"]
 
     },  
     "resolveJsonModule": true,                                    /* Specify a set of entries that re-map imports to additional lookup locations. */

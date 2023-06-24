@@ -1,36 +1,46 @@
+import { AuthRequest, UserSession, UserToken } from "@customTypes/database";
 import { RequestHandler } from "express";
-import { AuthRequest, UserToken } from "../../types/database";
 import {
   checkTransactionStatusInContract,
   confirmTransaction,
+  createAccount,
   createNewTransaction,
+  createSession,
+  deleteSession,
+  deleteSessionCookie,
   getReclaimInfo,
   getTransactionData,
   incrementUserBalance,
   loginUser,
   reclaimTransaction,
+  setSessionCookie,
   viewUsersTokens,
 } from "./utils";
-import {
-  createMintingMessageAndSig,
-  getCurrentBlockTime,
-  getValidTillTime,
-} from "../../utils/ethers";
-import { ServerError } from "../../custom-objects/ServerError";
 import {
   addTimeToCurrentDate,
   getMinutesAndSeconds,
   setCookie,
   typeCheck,
-} from "../../utils";
+} from "@utils";
+import { ServerError } from "@customObjects/ServerError";
+import {
+  createMintingMessageAndSig,
+  getCurrentBlockTime,
+  getValidTillTime,
+} from "@utils/ethers";
+
+import { validationResult } from "express-validator";
+import { extractSessionFromCookies, verifyJWT } from "@middleware/auth";
 
 const controller = {} as {
   postTokens: RequestHandler;
   postMintTransaction: RequestHandler;
-  getTransactionInfo: RequestHandler;
   postTransactionConfirmation: RequestHandler;
   postReclaimTransaction: RequestHandler;
   postLogin: RequestHandler;
+  postSignup: RequestHandler;
+  postLogout: RequestHandler;
+  getTransactionInfo: RequestHandler;
   getUsersTokens: RequestHandler;
 };
 
@@ -81,25 +91,6 @@ controller.postMintTransaction = async (req, res, next) => {
       next_nonce,
       tokens,
       validTill
-    );
-    return res.status(200).json(transactionInfo);
-  } catch (error) {
-    next(error);
-  }
-};
-
-controller.getTransactionInfo = async (req, res, next) => {
-  const authReq = req as AuthRequest;
-  const { accountId } = authReq;
-  const { transactionId } = req.query;
-  try {
-    typeCheck("string", { name: "transactionId", value: transactionId });
-    const data = await getTransactionData(+accountId!, +transactionId!);
-    const transactionInfo = await createMintingMessageAndSig(
-      data.ethereum_address,
-      data.nonce,
-      data.tokens,
-      data.valid_till
     );
     return res.status(200).json(transactionInfo);
   } catch (error) {
@@ -170,9 +161,61 @@ controller.postLogin = async (req, res, next) => {
       { name: "userName", value: userName },
       { name: "password", value: password }
     );
-    const { jwt, isNew } = await loginUser(userName, password);
-    setCookie(res, "session", jwt, addTimeToCurrentDate("Days", 3), "/");
-    return res.status(200).end();
+    const { jwt, isNew, address } = await loginUser(userName, password);
+    const expireDate = setSessionCookie(res, jwt);
+    return res.status(200).json({ address, expireDate });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.postSignup = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new ServerError(errors.array()[0].msg, 422);
+    }
+    const { userName, password } = req.body;
+    const accountId = await createAccount(userName, password);
+    const session = await createSession(accountId);
+    const expireDate = setSessionCookie(res, session);
+    return res
+      .status(200)
+      .redirect(`${process.env.MARKETPLACE_DOMIAN}/machoverse/link`);
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.postLogout = async (req, res, next) => {
+  try {
+    const session = extractSessionFromCookies(req);
+    deleteSessionCookie(res);
+    if (!session) {
+      return res.status(200).json({ message: "Nothing to log out of" });
+    }
+    const { accountId } = (await verifyJWT(session)) as UserSession;
+    deleteSession(accountId);
+    return res.status(200).json({ message: "Logged user out" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getTransactionInfo = async (req, res, next) => {
+  const authReq = req as AuthRequest;
+  const { accountId } = authReq;
+  const { transactionId } = req.query;
+  try {
+    typeCheck("string", { name: "transactionId", value: transactionId });
+    const data = await getTransactionData(+accountId!, +transactionId!);
+    const transactionInfo = await createMintingMessageAndSig(
+      data.ethereum_address,
+      data.nonce,
+      data.tokens,
+      data.valid_till
+    );
+    return res.status(200).json(transactionInfo);
   } catch (error) {
     next(error);
   }

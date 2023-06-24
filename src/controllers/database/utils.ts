@@ -1,8 +1,10 @@
-import { apiQuery } from "../../utils/database/connect";
-import { UserToken } from "../../types/database";
-import { ServerError } from "../../custom-objects/ServerError";
-import { compare } from "bcrypt";
-import { createSessionJWT, verifyJWT } from "../../middleware/auth";
+import { ServerError } from "@customObjects/ServerError";
+import { UserToken } from "@customTypes/database";
+import { createSessionJWT } from "@middleware/auth";
+import { addTimeToCurrentDate, setCookie } from "@utils";
+import { apiQuery } from "@utils/database/connect";
+import { compare, hash } from "bcrypt";
+import { Response } from "express";
 
 export const incrementUserBalance = async (
   accountId: number,
@@ -83,7 +85,7 @@ export const viewUsersTokens = async (accountId: number) => {
   return res.rows as UserToken[];
 };
 
-const createSession = async (accountId: number) => {
+export const createSession = async (accountId: number) => {
   const userJWT = createSessionJWT(accountId);
   const query = "CALL public.create_session($1, $2)";
   await apiQuery(query, [accountId, userJWT]);
@@ -91,7 +93,7 @@ const createSession = async (accountId: number) => {
 };
 
 export const loginUser = async (username: string, password: string) => {
-  const query = "SELECT * FROM public.get_user_password_and_session($1)";
+  const query = "SELECT * FROM public.get_user_details($1)";
   const res = await apiQuery(query, [username]);
   if (res.rows.length === 0) {
     throw new ServerError("Invalid credentials", 400);
@@ -100,6 +102,7 @@ export const loginUser = async (username: string, password: string) => {
     account_id: number;
     hashed_password: string;
     jwt: string | null;
+    address: string | null;
   };
   const isValid = await compare(password, details.hashed_password);
   if (!isValid) {
@@ -107,19 +110,57 @@ export const loginUser = async (username: string, password: string) => {
   }
   let userJWT = details.jwt;
   let isNew = false;
-  if (details.jwt) {
-    try {
-      await verifyJWT(details.jwt);
-      console.log("Valid JWT");
-    } catch (error) {
-      console.log("JWT expired, creating new one");
-      userJWT = await createSession(details.account_id);
-      isNew = true;
-    }
-  } else {
-    console.log("Creating JWT, session not found");
-    userJWT = await createSession(details.account_id);
-    isNew = true;
+  // if (details.jwt) {
+  //   try {
+  //     await verifyJWT(details.jwt);
+  //     console.log("Valid JWT");
+  //   } catch (error) {
+  //     console.log("JWT expired, creating new one");
+  //     userJWT = await createSession(details.account_id);
+  //     isNew = true;
+  //   }
+  // } else {
+  console.log("Creating JWT");
+  userJWT = await createSession(details.account_id);
+  isNew = true;
+  // }
+  return { jwt: userJWT!, isNew, address: details.address }!;
+};
+
+export const setSessionCookie = (
+  res: Response,
+  session: string,
+  expireDate?: Date
+) => {
+  expireDate = !!expireDate ? expireDate : addTimeToCurrentDate("Days", 3);
+  setCookie(res, "session", session, expireDate, "/");
+  return expireDate;
+};
+
+export const deleteSessionCookie = (res: Response) => {
+  setCookie(res, "session", "", new Date(new Date().setFullYear(2000)), "/");
+};
+
+export const createAccount = async (
+  userName: string,
+  password: string,
+  ethereumAddress?: string
+) => {
+  const hashedPassword = await hash(password, 12);
+  const query = "CALL public.create_account($1, $2, NULL, $3, NULL)";
+  const res = await apiQuery(query, [
+    userName,
+    hashedPassword,
+    ethereumAddress,
+  ]);
+  return res.rows[0].new_account_id as number;
+};
+
+export const deleteSession = async (accountId: number) => {
+  const query = "CALL public.delete_session($1)";
+  try {
+    await apiQuery(query, [accountId]);
+  } catch (error) {
+    console.log("Error deleting session", error);
   }
-  return { jwt: userJWT!, isNew }!;
 };

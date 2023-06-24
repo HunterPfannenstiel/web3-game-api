@@ -1,6 +1,7 @@
 import { apiQuery } from "../../../utils/database/connect";
 import { ServerError } from "../../../custom-objects/ServerError";
-import { MachoTokens, Transaction } from "../../../types/database";
+import { checkRowLength } from "@utils";
+import { MachoTokens, Transaction } from "@customTypes/database";
 
 export const linkEthereumAddress = async (
   accountId: number,
@@ -31,4 +32,11 @@ export const viewTransactions = async (accountId: number) => {
   const query = "SELECT * FROM public.view_transactions($1)";
   const res = await apiQuery(query, [accountId]);
   return res.rows as Transaction[];
+};
+
+export const getAccountInfo = async (accountId: number) => {
+  const query = "SELECT * FROM public.get_account_info($1)";
+  const res = await apiQuery(query, [accountId]);
+  checkRowLength(res);
+  return res.rows[0] as { user_name: string; address: string };
 };

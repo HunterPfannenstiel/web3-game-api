@@ -1,15 +1,20 @@
 import { addTimeToCurrentDate, setCookie, typeCheck } from "../../../utils";
 import { RequestHandler } from "express";
 import {
+  getAccountInfo,
   getEthereumAccountId,
   linkEthereumAddress,
   viewTokenMetadata,
   viewTransactions,
 } from "./utils";
-import { AuthRequest } from "types/database";
+import { AuthRequest, UserSession } from "types/database";
 import { verifySignature } from "../../../utils/auth";
 import { ServerError } from "../../../custom-objects/ServerError";
-import { createSessionJWT, verifyJWT } from "../../../middleware/auth";
+import {
+  createSessionJWT,
+  extractSessionFromCookies,
+  verifyJWT,
+} from "../../../middleware/auth";
 import uid from "uid-safe";
 import jwt from "jsonwebtoken";
 
@@ -19,6 +24,7 @@ const controller = {} as {
   getTransactions: RequestHandler;
   getSigningChallenge: RequestHandler;
   getTokenMetadata: RequestHandler;
+  getSessionInfo: RequestHandler;
 };
 
 controller.postLoginWithEthereum = async (req, res, next) => {
@@ -110,6 +116,24 @@ controller.getTokenMetadata = async (req, res, next) => {
   try {
     const tokenMetadata = await viewTokenMetadata();
     return res.status(200).json(tokenMetadata);
+  } catch (error) {
+    next(error);
+  }
+};
+
+controller.getSessionInfo = async (req, res, next) => {
+  try {
+    const sessionString = extractSessionFromCookies(req);
+    if (!sessionString) {
+      return res.redirect("/machoverse/login");
+    }
+    try {
+      const { accountId } = (await verifyJWT(sessionString)) as UserSession;
+      const accountInfo = await getAccountInfo(accountId);
+      return res.status(200).json(accountInfo);
+    } catch (error) {
+      return res.redirect("/machoverse/login");
+    }
   } catch (error) {
     next(error);
   }

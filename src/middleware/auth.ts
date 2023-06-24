@@ -10,13 +10,13 @@ export const authMiddleware =
     let sessionString: string;
     try {
       if (isWebRoute === undefined) {
-        sessionString = extractFromCookies(req) || extractFromClient(req);
+        sessionString =
+          extractSessionFromCookies(req) || extractFromClient(req);
       } else if (isWebRoute) {
-        sessionString = extractFromCookies(req);
+        sessionString = extractSessionFromCookies(req);
       } else {
         sessionString = extractFromClient(req);
       }
-      console.log(req.cookies);
       try {
         typeCheck("string", { name: "session", value: sessionString });
       } catch (error) {
@@ -35,7 +35,7 @@ export const authMiddleware =
     }
   };
 
-const extractFromCookies = (req: Request) => {
+export const extractSessionFromCookies = (req: Request) => {
   return req.cookies["session"];
 };
 
