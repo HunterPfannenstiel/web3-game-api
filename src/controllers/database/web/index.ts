@@ -2,21 +2,22 @@ import { addTimeToCurrentDate, setCookie, typeCheck } from "../../../utils";
 import { RequestHandler } from "express";
 import {
   getAccountInfo,
-  getEthereumAccountId,
+  getEthereumAccount,
   linkEthereumAddress,
   viewTokenMetadata,
   viewTransactions,
 } from "./utils";
-import { AuthRequest, UserSession } from "types/database";
+import { AuthRequest, SessionDetails, UserSession } from "types/database";
 import { verifySignature } from "../../../utils/auth";
 import { ServerError } from "../../../custom-objects/ServerError";
-import {
-  createSessionJWT,
-  extractSessionFromCookies,
-  verifyJWT,
-} from "../../../middleware/auth";
+import { extractSessionFromCookies, verifyJWT } from "../../../middleware/auth";
 import uid from "uid-safe";
 import jwt from "jsonwebtoken";
+import {
+  createDatabaseSession,
+  deleteSessionCookie,
+  setSessionCookie,
+} from "../utils";
 
 const controller = {} as {
   postLoginWithEthereum: RequestHandler;
@@ -45,10 +46,14 @@ controller.postLoginWithEthereum = async (req, res, next) => {
     );
     const { message } = (await verifyJWT(challengeJWT)) as { message: string };
     await verifySignature(message, address, signature);
-    const accountId = await getEthereumAccountId(address);
-    const jwt = createSessionJWT(accountId);
-    setCookie(res, "session", jwt, addTimeToCurrentDate("Days", 3), "/");
-    return res.status(200).json({ message: "Successful sign-in!" });
+    const { account_id, user_name } = await getEthereumAccount(address);
+    const { token, sessionExpiry } = await createDatabaseSession(account_id);
+    setSessionCookie(res, token, sessionExpiry);
+    return res.status(200).json({
+      userName: user_name,
+      sessionExpiry,
+      isSignedIn: true,
+    } as SessionDetails);
   } catch (error) {
     next(error);
   }
@@ -76,7 +81,7 @@ controller.postLinkWallet = async (req, res, next) => {
     await verifySignature(message, address, signature);
     await linkEthereumAddress(accountId, address);
     res.clearCookie("signing-challenge");
-    return res.status(200).json({ message: "Successfully linked!" });
+    return res.status(200).json({ address });
   } catch (error) {
     next(error);
   }
@@ -129,9 +134,17 @@ controller.getSessionInfo = async (req, res, next) => {
     }
     try {
       const { accountId } = (await verifyJWT(sessionString)) as UserSession;
-      const accountInfo = await getAccountInfo(accountId);
-      return res.status(200).json(accountInfo);
+      const { user_name, address, expire_date } = await getAccountInfo(
+        accountId
+      );
+      return res.status(200).json({
+        userName: user_name,
+        address,
+        sessionExpiry: expire_date,
+        isSignedIn: true,
+      } as SessionDetails);
     } catch (error) {
+      deleteSessionCookie(res);
       return res.redirect("/machoverse/login");
     }
   } catch (error) {

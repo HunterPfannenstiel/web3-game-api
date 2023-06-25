@@ -1,7 +1,7 @@
 import { ServerError } from "@customObjects/ServerError";
 import { UserToken } from "@customTypes/database";
 import { createSessionJWT } from "@middleware/auth";
-import { addTimeToCurrentDate, setCookie } from "@utils";
+import { setCookie } from "@utils";
 import { apiQuery } from "@utils/database/connect";
 import { compare, hash } from "bcrypt";
 import { Response } from "express";
@@ -85,11 +85,11 @@ export const viewUsersTokens = async (accountId: number) => {
   return res.rows as UserToken[];
 };
 
-export const createSession = async (accountId: number) => {
-  const userJWT = createSessionJWT(accountId);
-  const query = "CALL public.create_session($1, $2)";
-  await apiQuery(query, [accountId, userJWT]);
-  return userJWT;
+export const createDatabaseSession = async (accountId: number) => {
+  const { token, sessionExpiry } = createSessionJWT(accountId);
+  const query = "CALL public.create_session($1, $2, $3)";
+  await apiQuery(query, [accountId, token, sessionExpiry.toISOString()]);
+  return { token, sessionExpiry };
 };
 
 export const loginUser = async (username: string, password: string) => {
@@ -108,33 +108,19 @@ export const loginUser = async (username: string, password: string) => {
   if (!isValid) {
     throw new ServerError("Invalid credentials", 400);
   }
-  let userJWT = details.jwt;
-  let isNew = false;
-  // if (details.jwt) {
-  //   try {
-  //     await verifyJWT(details.jwt);
-  //     console.log("Valid JWT");
-  //   } catch (error) {
-  //     console.log("JWT expired, creating new one");
-  //     userJWT = await createSession(details.account_id);
-  //     isNew = true;
-  //   }
-  // } else {
-  console.log("Creating JWT");
-  userJWT = await createSession(details.account_id);
-  isNew = true;
-  // }
-  return { jwt: userJWT!, isNew, address: details.address }!;
+
+  const { token, sessionExpiry } = await createDatabaseSession(
+    details.account_id
+  );
+  return { jwt: token, isNew: true, address: details.address, sessionExpiry }!;
 };
 
 export const setSessionCookie = (
   res: Response,
   session: string,
-  expireDate?: Date
+  expireDate: Date
 ) => {
-  expireDate = !!expireDate ? expireDate : addTimeToCurrentDate("Days", 3);
   setCookie(res, "session", session, expireDate, "/");
-  return expireDate;
 };
 
 export const deleteSessionCookie = (res: Response) => {

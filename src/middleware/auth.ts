@@ -1,4 +1,4 @@
-import { typeCheck } from "../utils";
+import { addTimeToCurrentDate, typeCheck } from "../utils";
 import { ServerError } from "../custom-objects/ServerError";
 import { Request, RequestHandler } from "express";
 import jwt from "jsonwebtoken";
@@ -50,10 +50,11 @@ const extractFromClient = (req: Request) => {
 };
 
 export const createSessionJWT = (accountId: number) => {
+  const sessionExpiry = addTimeToCurrentDate("Days", 3);
   const token = jwt.sign({ accountId }, process.env.JWT_PASSWORD!, {
     expiresIn: "3 days",
   });
-  return token;
+  return { token, sessionExpiry };
 };
 
 export const verifyJWT = async (tokenString: string) => {

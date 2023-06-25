@@ -1,11 +1,16 @@
-import { AuthRequest, UserSession, UserToken } from "@customTypes/database";
+import {
+  AuthRequest,
+  SessionDetails,
+  UserSession,
+  UserToken,
+} from "@customTypes/database";
 import { RequestHandler } from "express";
 import {
   checkTransactionStatusInContract,
   confirmTransaction,
   createAccount,
   createNewTransaction,
-  createSession,
+  createDatabaseSession,
   deleteSession,
   deleteSessionCookie,
   getReclaimInfo,
@@ -161,9 +166,14 @@ controller.postLogin = async (req, res, next) => {
       { name: "userName", value: userName },
       { name: "password", value: password }
     );
-    const { jwt, isNew, address } = await loginUser(userName, password);
-    const expireDate = setSessionCookie(res, jwt);
-    return res.status(200).json({ address, expireDate });
+    const { jwt, isNew, address, sessionExpiry } = await loginUser(
+      userName,
+      password
+    );
+    setSessionCookie(res, jwt, sessionExpiry);
+    return res
+      .status(200)
+      .json({ address, sessionExpiry, isSignedIn: true } as SessionDetails);
   } catch (error) {
     next(error);
   }
@@ -177,11 +187,14 @@ controller.postSignup = async (req, res, next) => {
     }
     const { userName, password } = req.body;
     const accountId = await createAccount(userName, password);
-    const session = await createSession(accountId);
-    const expireDate = setSessionCookie(res, session);
-    return res
-      .status(200)
-      .redirect(`${process.env.MARKETPLACE_DOMIAN}/machoverse/link`);
+    const { token, sessionExpiry } = await createDatabaseSession(accountId);
+    setSessionCookie(res, token, sessionExpiry);
+    return res.status(200).json({
+      isSignedIn: true,
+      sessionExpiry,
+      address: undefined,
+    } as SessionDetails);
+    // .redirect(`${process.env.MARKETPLACE_DOMIAN}/machoverse/link`);
   } catch (error) {
     next(error);
   }

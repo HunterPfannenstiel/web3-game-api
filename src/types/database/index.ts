@@ -16,6 +16,13 @@ export type UserSession = {
   accountId: number;
 };
 
+export type SessionDetails = {
+  isSignedIn?: boolean;
+  userName?: string;
+  sessionExpiry?: Date;
+  address?: string;
+};
+
 export interface AuthRequest extends Request {
   accountId: number;
 }

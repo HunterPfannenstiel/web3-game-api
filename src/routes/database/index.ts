@@ -43,8 +43,4 @@ router.post("/logout", controller.postLogout);
 
 router.get("/user-tokens", authMiddleware(), controller.getUsersTokens);
 
-router.get("/", (req, res, next) => {
-  return res.status(200).json({ message: "hello from database" });
-});
-
 export default router;
