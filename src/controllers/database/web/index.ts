@@ -1,4 +1,10 @@
-import { addTimeToCurrentDate, setCookie, typeCheck } from "../../../utils";
+import {
+  addTimeToCurrentDate,
+  parseStringToBool,
+  setCookie,
+  typeCheck,
+  typeCheckPageFetch,
+} from "../../../utils";
 import { RequestHandler } from "express";
 import {
   getAccountInfo,
@@ -18,6 +24,7 @@ import {
   deleteSessionCookie,
   setSessionCookie,
 } from "../utils";
+import { PageFetch } from "@customTypes/index";
 
 const controller = {} as {
   postLoginWithEthereum: RequestHandler;
@@ -90,7 +97,17 @@ controller.postLinkWallet = async (req, res, next) => {
 controller.getTransactions = async (req, res, next) => {
   try {
     const authReq = req as AuthRequest;
-    const transactions = await viewTransactions(authReq.accountId);
+    const pageInfo = req.query as PageFetch & {
+      filterPending?: string;
+      filterConfirmed?: string;
+    };
+    typeCheckPageFetch(pageInfo);
+    const transactions = await viewTransactions(
+      authReq.accountId,
+      pageInfo,
+      parseStringToBool(pageInfo.filterPending),
+      parseStringToBool(pageInfo.filterConfirmed)
+    );
     return res.status(200).json(transactions);
   } catch (error) {
     next(error);

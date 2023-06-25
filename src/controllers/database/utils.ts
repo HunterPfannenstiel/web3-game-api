@@ -19,11 +19,13 @@ export const createNewTransaction = async (
   tokens: UserToken[],
   validTill: number
 ) => {
-  const query = "CALL public.mint_tokens_to_blockchain($1, $2, $3, NULL, NULL)";
+  const query =
+    "CALL public.mint_tokens_to_blockchain($1, $2, $3, $4, NULL, NULL)";
   const res = await apiQuery(query, [
     accountId,
     JSON.stringify(tokens),
     validTill,
+    new Date().toUTCString(),
   ]);
   return res.rows[0] as { next_nonce: number; address: string };
 };
@@ -88,7 +90,7 @@ export const viewUsersTokens = async (accountId: number) => {
 export const createDatabaseSession = async (accountId: number) => {
   const { token, sessionExpiry } = createSessionJWT(accountId);
   const query = "CALL public.create_session($1, $2, $3)";
-  await apiQuery(query, [accountId, token, sessionExpiry.toISOString()]);
+  await apiQuery(query, [accountId, token, sessionExpiry]);
   return { token, sessionExpiry };
 };
 
@@ -118,7 +120,7 @@ export const loginUser = async (username: string, password: string) => {
 export const setSessionCookie = (
   res: Response,
   session: string,
-  expireDate: Date
+  expireDate: Date | string
 ) => {
   setCookie(res, "session", session, expireDate, "/");
 };

@@ -19,7 +19,7 @@ export type UserSession = {
 export type SessionDetails = {
   isSignedIn?: boolean;
   userName?: string;
-  sessionExpiry?: Date;
+  sessionExpiry?: string;
   address?: string;
 };
 

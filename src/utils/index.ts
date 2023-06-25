@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { ServerError } from "../custom-objects/ServerError";
 import { QueryResult } from "pg";
+import { PageFetch } from "@customTypes/index";
 
 export const getMinutesAndSeconds = (seconds: number) => {
   const minutesWithDecimal = seconds / 60;
@@ -21,6 +22,22 @@ export const typeCheck = (
       );
     }
   });
+};
+
+export const parseStringToBool = (value?: string) => {
+  value = parseUndefinedToNull(value);
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value as undefined;
+};
+
+export const typeCheckPageFetch = (pageInfo: PageFetch) => {
+  typeCheck(
+    "string",
+    { name: "date", value: pageInfo.date },
+    { name: "page", value: pageInfo.page },
+    { name: "pageSize", value: pageInfo.pageSize }
+  );
 };
 
 export const optionalStringCheck = (...variables: any) => {
@@ -44,10 +61,11 @@ export const setCookie = (
   res: Response,
   cookieName: string,
   cookieValue: string,
-  expires: Date,
+  expires: Date | string,
   path?: string
 ) => {
-  let cookie = `${cookieName}=${cookieValue}; HttpOnly; expires=${expires.toUTCString()}`;
+  expires = typeof expires === "string" ? expires : expires.toUTCString();
+  let cookie = `${cookieName}=${cookieValue}; HttpOnly; expires=${expires}`;
   if (path) cookie += `; path=${path}`;
   res.setHeader("set-cookie", cookie);
 };

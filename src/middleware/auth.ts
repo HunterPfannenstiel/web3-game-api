@@ -54,7 +54,7 @@ export const createSessionJWT = (accountId: number) => {
   const token = jwt.sign({ accountId }, process.env.JWT_PASSWORD!, {
     expiresIn: "3 days",
   });
-  return { token, sessionExpiry };
+  return { token, sessionExpiry: sessionExpiry.toUTCString() };
 };
 
 export const verifyJWT = async (tokenString: string) => {
