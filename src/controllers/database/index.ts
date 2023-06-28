@@ -20,10 +20,12 @@ import {
   reclaimTransaction,
   setSessionCookie,
   viewUsersTokens,
+  viewUsersBlockchainTokens,
 } from "./utils";
 import {
   addTimeToCurrentDate,
   getMinutesAndSeconds,
+  optionalStringCheck,
   setCookie,
   typeCheck,
 } from "@utils";
@@ -238,7 +240,15 @@ controller.getUsersTokens = async (req, res, next) => {
   try {
     const authReq = req as AuthRequest;
     const { accountId } = authReq;
-    const tokens = await viewUsersTokens(+accountId!);
+    const { inventory } = req.query;
+    let tokens: UserToken[] = [];
+    optionalStringCheck({ name: "inventory", value: inventory });
+
+    if (inventory === "blockchain") {
+      tokens = await viewUsersBlockchainTokens(accountId);
+    } else {
+      tokens = await viewUsersTokens(+accountId!);
+    }
     return res.status(200).json(tokens);
   } catch (error) {
     next(error);

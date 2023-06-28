@@ -5,6 +5,6 @@ const router = Router();
 
 router.get("/", controller.getSignedMessage);
 
-router.get("/mint", controller.getMintingMessage);
+router.get("/mock-mint", controller.getMintingMessage);
 
 export default router;

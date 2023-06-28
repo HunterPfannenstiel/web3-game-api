@@ -62,14 +62,15 @@ export const createMintingMessageAndSig = async (
     nonce,
     mintingDetails,
   };
+  const ids: number[] = [];
+  const amounts: number[] = [];
+  claimInfo.mintingDetails.forEach((token) => {
+    ids.push(token.tokenId);
+    amounts.push(token.amount);
+  });
   const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
     claimInfoStruct,
-    [
-      claimInfo.minter,
-      claimInfo.validTill,
-      claimInfo.nonce,
-      claimInfo.mintingDetails.map((mint) => [mint.tokenId, mint.amount]),
-    ]
+    [claimInfo.minter, claimInfo.validTill, claimInfo.nonce, ids, amounts]
   );
   const dataSig = await signBytes(encodedData);
   return { data: encodedData, signature: dataSig };
@@ -79,7 +80,8 @@ export const claimInfoStruct = [
   "address",
   "uint256",
   "uint256",
-  "tuple(uint256, uint256)[]",
+  "uint256[]",
+  "uint256[]",
 ];
 
 export const getCurrentBlockTime = async () => {

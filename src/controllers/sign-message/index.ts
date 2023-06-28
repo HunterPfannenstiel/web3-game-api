@@ -1,13 +1,7 @@
-import {
-  claimInfoStruct,
-  getValidTillTime,
-  signBytes,
-  signMessage,
-} from "../../utils/ethers";
+import { createMintingMessageAndSig, signMessage } from "../../utils/ethers";
 import { ServerError } from "../../custom-objects/ServerError";
-import { ethers } from "ethers";
 import { RequestHandler } from "express";
-import { ClaimInfoStruct, MintInfoStruct } from "../../types/game-contract";
+import { MintInfoStruct } from "../../types/game-contract";
 
 const controller = {} as {
   getSignedMessage: RequestHandler;
@@ -34,25 +28,14 @@ controller.getMintingMessage = async (req, res, next) => {
       { tokenId: 2, amount: 1000 },
       { tokenId: 500, amount: 1 },
     ];
-    const futureTimestamp = await getValidTillTime();
-    const claimInfo: ClaimInfoStruct = {
-      minter: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
-      validTill: futureTimestamp,
-      nonce: 1,
+    const { minter, nonce } = req.query;
+    const mint = await createMintingMessageAndSig(
+      minter as string,
+      +(nonce as string),
       mintingDetails,
-    };
-    const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
-      claimInfoStruct,
-      [
-        claimInfo.minter,
-        claimInfo.validTill,
-        claimInfo.nonce,
-        claimInfo.mintingDetails.map((mint) => [mint.tokenId, mint.amount]),
-      ]
+      21687665001
     );
-
-    const dataSig = await signBytes(encodedData);
-    return res.status(200).json({ data: dataSig, message: encodedData });
+    return res.status(200).json(mint);
   } catch (error) {
     next(error);
   }

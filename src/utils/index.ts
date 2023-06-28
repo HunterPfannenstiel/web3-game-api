@@ -40,10 +40,12 @@ export const typeCheckPageFetch = (pageInfo: PageFetch) => {
   );
 };
 
-export const optionalStringCheck = (...variables: any) => {
-  variables.forEach((variable: any) => {
-    variable = parseUndefinedToNull(variable);
-    if (typeof variable !== "string" && !!variable) {
+export const optionalStringCheck = (
+  ...variables: { name: string; value: any }[]
+) => {
+  variables.forEach((variable) => {
+    variable = parseUndefinedToNull(variable.value);
+    if (typeof variable.value !== "string" && !!variable.value) {
       throw new ServerError(
         `Variable is not a valid type, variable value received: ${variable}`,
         400

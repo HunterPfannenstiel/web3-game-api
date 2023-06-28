@@ -5,6 +5,9 @@ import { setCookie } from "@utils";
 import { apiQuery } from "@utils/database/connect";
 import { compare, hash } from "bcrypt";
 import { Response } from "express";
+import { getAccountInfo } from "./web/utils";
+import { getAlchemy } from "@utils/ethers";
+import { Network } from "alchemy-sdk";
 
 export const incrementUserBalance = async (
   accountId: number,
@@ -151,4 +154,16 @@ export const deleteSession = async (accountId: number) => {
   } catch (error) {
     console.log("Error deleting session", error);
   }
+};
+
+export const viewUsersBlockchainTokens = async (accountId: number) => {
+  const { address } = await getAccountInfo(accountId);
+  const alchemy = getAlchemy(Network.ETH_GOERLI);
+  const { ownedNfts } = await alchemy.nft.getNftsForOwner(address, {
+    omitMetadata: true,
+    contractAddresses: [process.env.MACHOVERSE_ADDRESS!],
+  });
+  return ownedNfts.map((nft) => {
+    return { tokenId: +nft.tokenId, amount: nft.balance };
+  }) as UserToken[];
 };
