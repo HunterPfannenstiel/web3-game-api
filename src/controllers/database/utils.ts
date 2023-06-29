@@ -80,8 +80,8 @@ export const reclaimTransaction = async (
   accountId: number,
   transactionId: number
 ) => {
-  const query = "CALL public.reclaim_pending_transaction($1, $2)";
-  await apiQuery(query, [accountId, transactionId]);
+  const query = "CALL public.reclaim_pending_transaction($1, $2, $3)";
+  await apiQuery(query, [accountId, transactionId, new Date().toUTCString()]);
 };
 
 export const viewUsersTokens = async (accountId: number) => {
