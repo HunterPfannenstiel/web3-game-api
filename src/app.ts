@@ -6,11 +6,13 @@ import smachoRouter from "./routes/smacho";
 import signMessageRouter from "./routes/sign-message";
 import databaseRouter from "./routes/database";
 import webRouter from "./routes/database/web";
+import webhookRouter from "./routes/webhook";
+import { addAlchemyContextToRequest } from "@middleware/alchemy";
 
 if (process.env.NODE_ENV !== "production") config();
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ verify: addAlchemyContextToRequest }));
 app.use(cookieParser());
 
 app.use((req, res, next) => {
@@ -29,6 +31,7 @@ app.use("/smacho", smachoRouter);
 app.use("/sign-message", signMessageRouter);
 app.use("/database/web", webRouter);
 app.use("/database", databaseRouter);
+app.use("/webhook", webhookRouter);
 
 app.get("/", (req, res, next) => {
   return res.status(200).json({ message: "hello" });
